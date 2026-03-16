@@ -124,117 +124,63 @@ Users can toggle note "public sharing":
 
 #### better-auth Core Tables
 
-better-auth manages its own tables for authentication. The following tables are required by better-auth:
+better-auth manages its own tables for authentication via CLI (`npx auth@latest migrate` or `npx auth@latest generate`). Le tabelle **non vanno create manualmente**: è better-auth a generare e migrare lo schema.
 
-**user**
+I tipi indicati sono quelli TypeScript ufficiali di better-auth; il mapping su SQLite è: `string` → `TEXT`, `boolean` → `INTEGER` (0/1), `Date` → `TEXT` (ISO 8601).
 
-```sql
-CREATE TABLE user (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  emailVerified INTEGER NOT NULL DEFAULT 0,
-  image TEXT,
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
+**user** (table name: `user`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | TEXT | Unique identifier for each user (primary key) |
-| name | TEXT | User's chosen display name |
-| email | TEXT | User's email address for communication and login |
-| emailVerified | INTEGER | Whether the user's email is verified (0 or 1) |
-| image | TEXT | User's image URL (optional) |
-| createdAt | TEXT | Timestamp of when the user account was created |
-| updatedAt | TEXT | Timestamp of the last update to the user's information |
+| Field | Type | Key | Required | Description |
+|-------|------|-----|----------|-------------|
+| id | string | PK | ✓ | Unique identifier for each user |
+| name | string | — | ✓ | User's chosen display name |
+| email | string | — | ✓ | User's email address for communication and login |
+| emailVerified | boolean | — | ✓ | Whether the user's email is verified |
+| image | string | — | — | User's image URL (optional) |
+| createdAt | Date | — | ✓ | Timestamp of when the user account was created |
+| updatedAt | Date | — | ✓ | Timestamp of the last update to the user's information |
 
-**session**
+**session** (table name: `session`)
 
-```sql
-CREATE TABLE session (
-  id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL,
-  token TEXT NOT NULL UNIQUE,
-  expiresAt TEXT NOT NULL,
-  ipAddress TEXT,
-  userAgent TEXT,
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (userId) REFERENCES user(id)
-);
-```
+| Field | Type | Key | Required | Description |
+|-------|------|-----|----------|-------------|
+| id | string | PK | ✓ | Unique identifier for each session |
+| userId | string | FK | ✓ | The ID of the user |
+| token | string | — | ✓ | The unique session token |
+| expiresAt | Date | — | ✓ | The time when the session expires |
+| ipAddress | string | — | — | The IP address of the device (optional) |
+| userAgent | string | — | — | The user agent information of the device (optional) |
+| createdAt | Date | — | ✓ | Timestamp of when the session was created |
+| updatedAt | Date | — | ✓ | Timestamp of when the session was updated |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | TEXT | Unique identifier for each session (primary key) |
-| userId | TEXT | The ID of the user (foreign key) |
-| token | TEXT | The unique session token |
-| expiresAt | TEXT | The time when the session expires |
-| ipAddress | TEXT | The IP address of the device (optional) |
-| userAgent | TEXT | The user agent information of the device (optional) |
-| createdAt | TEXT | Timestamp of when the session was created |
-| updatedAt | TEXT | Timestamp of when the session was updated |
+**account** (table name: `account`)
 
-**account**
+| Field | Type | Key | Required | Description |
+|-------|------|-----|----------|-------------|
+| id | string | PK | ✓ | Unique identifier for each account |
+| userId | string | FK | ✓ | The ID of the user |
+| accountId | string | — | ✓ | The ID of the account as provided by the SSO, or equal to userId for credential accounts |
+| providerId | string | — | ✓ | The ID of the provider (e.g. `credential`, `google`) |
+| accessToken | string | — | — | The access token returned by the provider (optional) |
+| refreshToken | string | — | — | The refresh token returned by the provider (optional) |
+| accessTokenExpiresAt | Date | — | — | The time when the access token expires (optional) |
+| refreshTokenExpiresAt | Date | — | — | The time when the refresh token expires (optional) |
+| scope | string | — | — | The scope of the account returned by the provider (optional) |
+| idToken | string | — | — | The ID token returned from the provider (optional) |
+| password | string | — | — | The hashed password; used for email/password authentication (optional) |
+| createdAt | Date | — | ✓ | Timestamp of when the account was created |
+| updatedAt | Date | — | ✓ | Timestamp of when the account was updated |
 
-```sql
-CREATE TABLE account (
-  id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL,
-  accountId TEXT NOT NULL,
-  providerId TEXT NOT NULL,
-  accessToken TEXT,
-  refreshToken TEXT,
-  accessTokenExpiresAt TEXT,
-  refreshTokenExpiresAt TEXT,
-  scope TEXT,
-  idToken TEXT,
-  password TEXT,
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (userId) REFERENCES user(id)
-);
-```
+**verification** (table name: `verification`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | TEXT | Unique identifier for each account (primary key) |
-| userId | TEXT | The ID of the user (foreign key) |
-| accountId | TEXT | The ID of the account as provided by SSO or equal to userId for credential accounts |
-| providerId | TEXT | The ID of the provider (e.g., "credential", "google", "github") |
-| accessToken | TEXT | The access token returned by the provider (optional) |
-| refreshToken | TEXT | The refresh token returned by the provider (optional) |
-| accessTokenExpiresAt | TEXT | The time when the access token expires (optional) |
-| refreshTokenExpiresAt | TEXT | The time when the refresh token expires (optional) |
-| scope | TEXT | The scope of the account returned by the provider (optional) |
-| idToken | TEXT | The ID token returned from the provider (optional) |
-| password | TEXT | The hashed password for email/password authentication (optional) |
-| createdAt | TEXT | Timestamp of when the account was created |
-| updatedAt | TEXT | Timestamp of when the account was updated |
-
-**verification**
-
-```sql
-CREATE TABLE verification (
-  id TEXT PRIMARY KEY,
-  identifier TEXT NOT NULL,
-  value TEXT NOT NULL,
-  expiresAt TEXT NOT NULL,
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | TEXT | Unique identifier for each verification (primary key) |
-| identifier | TEXT | The identifier for the verification request |
-| value | TEXT | The value to be verified |
-| expiresAt | TEXT | The time when the verification request expires |
-| createdAt | TEXT | Timestamp of when the verification request was created |
-| updatedAt | TEXT | Timestamp of when the verification request was updated |
+| Field | Type | Key | Required | Description |
+|-------|------|-----|----------|-------------|
+| id | string | PK | ✓ | Unique identifier for each verification |
+| identifier | string | — | ✓ | The identifier for the verification request |
+| value | string | — | ✓ | The value to be verified |
+| expiresAt | Date | — | ✓ | The time when the verification request expires |
+| createdAt | Date | — | ✓ | Timestamp of when the verification request was created |
+| updatedAt | Date | — | ✓ | Timestamp of when the verification request was updated |
 
 #### notes
 
