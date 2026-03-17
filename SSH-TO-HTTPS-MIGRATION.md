@@ -8,8 +8,20 @@ Consentire sia all'utente (Git Bash) che a Claude (Bash tool) di eseguire `git p
 
 ## Contesto iniziale
 
-- Repository clonato via SSH (`git@github.com:bitox72/starting-project.git`)
-- Chiave SSH ED25519 protetta da passphrase
+Il punto di partenza era un sistema **senza alcuna chiave SSH configurata**. I passi eseguiti per arrivare alla configurazione SSH:
+
+1. Generazione della chiave ED25519:
+   ```bash
+   ssh-keygen -t ed25519 -C "stefano.bitossi@gmail.com"
+   ```
+2. Aggiunta della chiave pubblica su GitHub (Settings → SSH and GPG keys)
+3. Configurazione del remote del repository in formato SSH:
+   ```bash
+   git remote set-url origin git@github.com:bitox72/starting-project.git
+   ```
+
+**Problema emerso:** ad ogni `git push` veniva richiesta la passphrase della chiave ED25519, sia nelle sessioni Git Bash dell'utente che nel Bash tool di Claude.
+
 - Sistema: Windows 11, Git Bash (MSYS2), shell di Claude = Git Bash isolato
 
 ---
